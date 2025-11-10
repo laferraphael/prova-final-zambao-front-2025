@@ -1,7 +1,7 @@
 import { useAuth0 } from "@auth0/auth0-react";
 import React, { useEffect, useState, useCallback } from "react";
-import LoginButton from "./LoginButton";
-import LogoutButton from "./LogoutButton";
+import LoginButton from "./LoginButton.jsx";
+import LogoutButton from "./LogoutButton.jsx";
 
 const BASE_URL = "http://18.231.19.200:8080";
 
