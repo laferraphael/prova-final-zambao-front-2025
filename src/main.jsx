@@ -2,9 +2,29 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
+import { Auth0Provider } from '@auth0/auth0-react'
+
+const onRedirectCallback = (appState) => {
+  console.log('Redirect callback chamado com appState:', appState);
+  // Limpar apenas após o Auth0 processar o callback
+  const returnTo = appState?.returnTo || window.location.pathname;
+  window.history.replaceState({}, document.title, returnTo);
+};
 
 createRoot(document.getElementById('root')).render(
-  <StrictMode>
+  <Auth0Provider
+      domain={import.meta.env.VITE_AUTH0_DOMAIN || "dev-n7ewnwbo2a24rkxj.us.auth0.com"}
+      clientId={import.meta.env.VITE_AUTH0_CLIENT_ID || "qaOuvFe8qNLxNWwjjc6KwvqKtIKw8TYd"}
+      authorizationParams={{
+        redirect_uri: window.location.origin,
+        response_type: "code",
+        scope: "openid profile email",
+        audience: "https://dev-n7ewnwbo2a24rkxj.us.auth0.com/api/v2/"
+      }}
+      useRefreshTokens={false}
+      cacheLocation="memory"
+      onRedirectCallback={onRedirectCallback}
+    >
     <App />
-  </StrictMode>,
+  </Auth0Provider>,
 )
