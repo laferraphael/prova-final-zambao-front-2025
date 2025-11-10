@@ -3,7 +3,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import LoginButton from "./LoginButton.jsx";
 import LogoutButton from "./LogoutButton.jsx";
 
-const BASE_URL = "http://18.231.19.200:8080";
+const BASE_URL = "https://18.231.19.200:8080";
 
 export default function FilmeApp() {
   const [filmes, setFilmes] = useState([]);
