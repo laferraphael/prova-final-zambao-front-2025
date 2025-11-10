@@ -5,21 +5,6 @@ import LogoutButton from "./LogoutButton.jsx";
 
 const BASE_URL = "/api";
 
-// Função para decodificar JWT (sem verificar assinatura, apenas para debug)
-function decodeJWT(token) {
-  try {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(''));
-    return JSON.parse(jsonPayload);
-  } catch (e) {
-    console.error('Erro ao decodificar JWT:', e);
-    return null;
-  }
-}
-
 export default function FilmeApp() {
   const [filmes, setFilmes] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -56,30 +41,9 @@ export default function FilmeApp() {
           accessToken = await getAccessTokenSilently();
         }
         
-        console.log('✅ Token obtido:', accessToken ? 'Token presente' : 'Token vazio');
-        if (accessToken) {
-          const decoded = decodeJWT(accessToken);
-          if (decoded) {
-            console.log('═══════════════════════════════════════════════════════');
-            console.log('🔍 INFORMAÇÕES DO TOKEN JWT (DEBUG):');
-            console.log('═══════════════════════════════════════════════════════');
-            console.log('  📍 Issuer (iss):', decoded.iss);
-            console.log('  🎯 Audience (aud):', decoded.aud || 'UNDEFINED - Backend pode não precisar');
-            console.log('  👤 Subject (sub):', decoded.sub);
-            console.log('  ⏰ Expira em:', new Date(decoded.exp * 1000).toLocaleString());
-            console.log('  🔑 Scopes:', decoded.scope);
-            console.log('  📝 Token (início):', accessToken.substring(0, 50) + '...');
-            console.log('═══════════════════════════════════════════════════════');
-            console.log('💡 Se o Audience for UNDEFINED, o backend pode não precisar de audience específico');
-            console.log('💡 Se o Audience tiver valor, verifique se corresponde ao esperado pelo backend');
-            console.log('═══════════════════════════════════════════════════════');
-          } else {
-            console.error('❌ Não foi possível decodificar o token JWT');
-          }
-        }
         setToken(accessToken);
       } catch (e) {
-        console.error('Erro ao buscar token:', e);
+        // Erro ao obter token será tratado quando necessário
       }
     };
 
@@ -108,36 +72,21 @@ export default function FilmeApp() {
   );
 
   const fetchFilmes = useCallback(async () => {
-    if (!token) {
-      console.log('Token não disponível para fetchFilmes');
-      return;
-    }
+    if (!token) return;
     setLoading(true);
     setError(null);
     try {
-      console.log('Fazendo requisição GET para /api/filmes com token');
-      console.log('Header Authorization:', `Bearer ${token.substring(0, 20)}...`);
       const res = await fetch(`${BASE_URL}/filmes`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      console.log('Resposta recebida:', res.status, res.statusText);
-      console.log('Headers da resposta:', Object.fromEntries(res.headers.entries()));
       if (!res.ok) {
-        const text = await res.text();
-        console.error('❌ Erro na resposta:', res.status, text);
-        console.error('💡 Possíveis causas:');
-        console.error('   1. Audience do token não corresponde ao esperado pelo backend');
-        console.error('   2. Backend não está configurado para validar tokens do Auth0');
-        console.error('   3. Token expirado ou inválido');
-        console.error('   4. Backend espera um formato diferente de autenticação');
         throw new Error(`Erro ao carregar: ${res.status}`);
       }
       const data = await res.json();
       setFilmes(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error('Erro em fetchFilmes:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -175,7 +124,6 @@ export default function FilmeApp() {
           return;
         }
       } catch (e) {
-        console.error('Erro ao buscar token:', e);
         setError("Erro ao obter token de autenticação. Por favor, faça login novamente.");
         return;
       }
@@ -206,7 +154,6 @@ export default function FilmeApp() {
         }
       }
       
-      console.log('Fazendo requisição POST para /api/filmes com token');
       const res = await fetch(`${BASE_URL}/filmes`, {
         method: "POST",
         headers: {
@@ -215,7 +162,6 @@ export default function FilmeApp() {
         },
         body: JSON.stringify(dto)
       });
-      console.log('Resposta POST recebida:', res.status, res.statusText);
 
       if (!res.ok) {
         const text = await res.text();
@@ -335,35 +281,6 @@ export default function FilmeApp() {
             </button>
             <button type="button" onClick={fetchFilmes} className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">
               Recarregar
-            </button>
-            <button 
-              type="button" 
-              onClick={() => {
-                if (token) {
-                  const decoded = decodeJWT(token);
-                  if (decoded) {
-                    console.log('═══════════════════════════════════════════════════════');
-                    console.log('🔍 INFORMAÇÕES DO TOKEN JWT (DEBUG):');
-                    console.log('═══════════════════════════════════════════════════════');
-                    console.log('  📍 Issuer (iss):', decoded.iss);
-                    console.log('  🎯 Audience (aud):', decoded.aud || 'UNDEFINED - Backend pode não precisar');
-                    console.log('  👤 Subject (sub):', decoded.sub);
-                    console.log('  ⏰ Expira em:', new Date(decoded.exp * 1000).toLocaleString());
-                    console.log('  🔑 Scopes:', decoded.scope);
-                    console.log('  📝 Token completo:', token);
-                    console.log('═══════════════════════════════════════════════════════');
-                    alert('Informações do token foram logadas no console! Abra o DevTools (F12) para ver.');
-                  } else {
-                    alert('Erro ao decodificar token. Veja o console para mais detalhes.');
-                  }
-                } else {
-                  alert('Token não disponível. Faça login novamente.');
-                }
-              }}
-              className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 text-sm"
-              title="Debug: Mostra informações do token no console"
-            >
-              🔍 Debug Token
             </button>
           </div>
         </form>
